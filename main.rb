@@ -103,7 +103,7 @@ class RainBot
             @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
             @commands = @commands+1
           end
-          
+
           if line[1].downcase =~ /!commands.*/
             @socket.puts("PRIVMSG ##{@channelname} :My commands can be found here https://github.com/SamWhale/ShipBot/blob/master/README.md")
           end
