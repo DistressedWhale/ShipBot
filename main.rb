@@ -24,8 +24,8 @@ class RainBot
   end
 
   def splitTraffic (s)
-  #:username!username@username.tmi.twitch.tv PRIVMSG #twitchchannel :Hello World
-  #<------------------Preamble-------------><command-><-Channel----><-msg------>
+    #:username!username@username.tmi.twitch.tv PRIVMSG #twitchchannel :Hello World
+    #<------------------Preamble-------------><command-><-Channel----><-msg------>
     s = s[1..s.length-1] #strip out first character
     splitstring = s.split(' ')
     out = []
@@ -89,31 +89,35 @@ class RainBot
           #<--------Commands/Triggers-------->
 
           if line[1].downcase.include? "good bot"
-              @socket.puts("PRIVMSG ##{@channelname} :Awh thanks <3")
+            @socket.puts("PRIVMSG ##{@channelname} :Awh thanks <3")
           end
 
-           if line[1].downcase =~ /!time.*/
-             time = DateTime.now.strftime("%d/%m/%Y %H:%M")
-             @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
-             @commands = @commands+1
-           end
+          if line[1].downcase =~ /!time.*/
+            time = DateTime.now.strftime("%d/%m/%Y %H:%M")
+            @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
+            @commands = @commands+1
+          end
 
 
-           if line[1].downcase =~ /!github.*/
-             @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
-             @commands = @commands+1
-           end
+          if line[1].downcase =~ /!github.*/
+            @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
+            @commands = @commands+1
+          end
+          
+          if line[1].downcase =~ /!commands.*/
+            @socket.puts("PRIVMSG ##{@channelname} :My commands can be found here https://github.com/SamWhale/ShipBot/blob/master/README.md")
+          end
 
-           if line[1].downcase =~ /!uptime.*/
-             uri = URI("https://decapi.me/twitch/uptime?channel=#{@channelname}")
-             text = Net::HTTP.get(uri)
+          if line[1].downcase =~ /!uptime.*/
+            uri = URI("https://decapi.me/twitch/uptime?channel=#{@channelname}")
+            text = Net::HTTP.get(uri)
 
-             if text == "#{@channelname} is offline"
-               @socket.puts("PRIVMSG ##{@channelname} :#{text}")
-             else
-               @socket.puts("PRIVMSG ##{@channelname} :#{@channelname} has been live for #{text}")
-             end
-           end
+            if text == "#{@channelname} is offline"
+              @socket.puts("PRIVMSG ##{@channelname} :#{text}")
+            else
+              @socket.puts("PRIVMSG ##{@channelname} :#{@channelname} has been live for #{text}")
+            end
+          end
         end
       end
     end
