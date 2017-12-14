@@ -1,4 +1,4 @@
-# Ship Bot by ShipGoSync.
+# Ship Bot
 ### v1.0
 ##### Console commands
 | Command       | Result        |
