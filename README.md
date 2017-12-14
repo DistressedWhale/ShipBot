@@ -1,5 +1,5 @@
-# Ship Bot by ShipGoSync.
-### v1.0
+# Ship Bot by Sam Whale
+
 ##### Console commands
 | Command       | Result        |
 | ------------- |:-------------:|
