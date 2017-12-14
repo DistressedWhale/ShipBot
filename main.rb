@@ -98,6 +98,12 @@ class RainBot
              @commands = @commands+1
            end
 
+
+           if line[1].downcase =~ /!github.*/
+             @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
+             @commands = @commands+1
+           end
+
            if line[1].downcase =~ /!uptime.*/
              uri = URI("https://decapi.me/twitch/uptime?channel=#{@channelname}")
              text = Net::HTTP.get(uri)
