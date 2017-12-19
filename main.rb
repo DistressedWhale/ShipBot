@@ -2,7 +2,6 @@ require 'socket'
 require 'logger'
 require 'date'
 require 'open-uri'
-#require 'nokogiri'
 require 'net/http'
 require 'inifile'
 
