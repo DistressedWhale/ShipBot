@@ -75,7 +75,7 @@ class RainBot
 
           #Removes join and unesscesscary lines from the console
           if line =~ /:.+!.+@.+\.tmi\.twitch\.tv PRIVMSG #.+ :.+/
-            #outputs chat with stripping
+            #outputs chat wsith stripping
             line = splitTraffic(line)
             print "#{line[0]}"
             print " "*(25 - line[0].length) #25 character padding
@@ -96,7 +96,6 @@ class RainBot
             @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
             @commands = @commands+1
           end
-
 
           if line[1].downcase =~ /!github.*/
             @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
