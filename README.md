@@ -3,7 +3,7 @@
 ##### Console commands
 | Command       | Result        |
 | ------------- |:-------------:|
-| disconnect         | Disconnects ShipBot from the channel it's in |
+| disconnect / dc        | Disconnects ShipBot from the channel it's in |
 | send {message}     | Sends a message with PRIVMSG |
 
 ##### Twitch Commands
