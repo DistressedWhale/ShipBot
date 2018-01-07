@@ -3,8 +3,8 @@
 ##### Console commands
 | Command       | Result        |
 | ------------- |:-------------:|
-| disconnect / dc        | Disconnects ShipBot from the channel it's in |
-| send {message}     | Sends a message with PRIVMSG |
+| disconnect / dc | Disconnects ShipBot from the channel it's in |
+| send <message> | Sends a message with PRIVMSG |
 
 ##### Twitch Commands
 | Command       | Result        |
@@ -14,3 +14,4 @@
 | !github       | Returns github repository |
 | !commands     | Returns link to readme.md |
 | !game         | Returns current game being played |
+| !command add <call> <response> | Adds a command that when triggered by <call>, returns <reponse> |

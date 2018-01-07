@@ -7,65 +7,136 @@ require 'net/http'
 Thread.abort_on_exception=true
 
 class Bot
+  def reloadConfig
+    @botIni = IniFile.load("config/config.ini")
+    @commandsIni = IniFile.load("config/commands.ini")
+
+    @oauth = @botIni["botinfo"]["OAuth-key"]
+    @nickname = @botIni["botinfo"]["bot-nickname"]
+
+    puts "[#{getTime}]: Config reloaded"
+  end
+
   def initialize
-    Struct.new("Message", :user, :message)
+    Struct.new("Message", :user, :message, :timestamp)
 
     @running = false
     @socket = nil
     @channelname = nil
     @messages = 0
 
-    @botIni = IniFile.load("config/config.ini")
-    @commandsIni = IniFile.load("config/commands.ini")
-
-    @oauth = @botIni["botinfo"]["OAuth-key"]
-    @nickname = @botIni["botinfo"]["bot-nickname"]
+    reloadConfig
   end
 
   def getTime
-    "[#{DateTime.now.strftime("%H:%M")}]"
+    "#{DateTime.now.strftime("%H:%M")}"
   end
 
   def splitTraffic (s)
     #:username!username@username.tmi.twitch.tv PRIVMSG #twitchchannel :Hello World
     #<------------------Preamble-------------><command-><-Channel----><----msg---->
 
-    #Stripping
-    s = s[1..s.length-1] #strip out first character
-    splitstring = s.split(" ")
     out = Struct::Message.new
-    messagestart =  s.index(":")
+
+    #Stripping
+    s = s[1..s.length-1] #strip out first colon
+    splitstring = s.split(" ") #split string into 4 sections based on the spaces
+    messagestart =  s.index(":") + 1 #Find start of the message itself
 
     #preamble contains the name 3 times and 17 other characters
     namelength = (splitstring[0].length - 17) / 3
-    out.user = splitstring[0][0..namelength] #strip the name out of the preamble
-    out.message = s[(messagestart+1)..s.length-1]
+
+    #Setting up the output
+    out.user = splitstring[0][0..namelength]
+    out.message = s[(messagestart)..s.length-1]
+    out.timestamp = getTime
+
     return out
   end
 
   #get channel and open socket
   def connect()
-    puts "#{getTime}: Ship Bot started"
-    puts "#{getTime}: What twitch channel do you want to connect to?"
+    puts "[#{getTime}]: Ship Bot started"
+    puts "[#{getTime}]: What twitch channel do you want to connect to?"
     @channelname = gets.chomp.downcase
 
-    puts "#{getTime}: Preparing to connect..."
+    puts "[#{getTime}]: Preparing to connect..."
     @socket = TCPSocket.new("irc.chat.twitch.tv", 6667)
-    puts "#{getTime}: Connected successfully"
+    puts "[#{getTime}]: Connected successfully"
 
-    puts "#{getTime}: Authenticating..."
+    puts "[#{getTime}]: Authenticating..."
     @socket.puts("PASS #{@oauth}")
     @socket.puts("NICK #{@nickname}")
-    puts "#{getTime}: Successfully authenticated"
+    puts "[#{getTime}]: Successfully authenticated"
 
-    puts "#{getTime}: Joining #{@channelname}..."
+    puts "[#{getTime}]: Joining #{@channelname}..."
     @socket.puts("JOIN #" + @channelname)
-    puts "#{getTime}: Joined #{@channelname}"
+    puts "[#{getTime}]: Joined #{@channelname}"
 
-    puts "#{getTime}: Requesting permissions..."
+    puts "[#{getTime}]: Requesting permissions..."
     @socket.puts("CAP REQ :twitch.tv/membership")
-    puts "#{getTime}: Permissions granted"
+    puts "[#{getTime}]: Permissions granted"
     puts "" #newline
+  end
+
+  def addCommand(call, response)
+    File.open('config/commands.ini', 'a') do |f|
+      f.puts("#{call}=#{response}")
+    end
+
+    reloadConfig
+  end
+
+  def filterCommand(addCommString)
+    splitMessage = addCommString.split(" ")
+    call = splitMessage[2]
+    responseArr = splitMessage[3..splitMessage.length-1]
+    response = ""
+
+    responseArr.each do |word|
+      response.concat(word + " ")
+    end
+
+    response = response[0..response.length-1]
+
+    addCommand(call, response)
+  end
+
+  def triggerCommands(line)
+    m = line.message.downcase
+
+    if m.include? "good bot"
+      @socket.puts("PRIVMSG ##{@channelname} :Awh thanks <3")
+
+    elsif m =~ /!time.*/
+      time = DateTime.now.strftime("%d/%m/%Y %H:%M")
+      @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
+
+    elsif m =~ /!game.*/
+      @socket.puts("PRIVMSG ##{@channelname} :The current game is #{Net::HTTP.get('decapi.me', "/twitch/game/#{@channelname}")}")
+
+    elsif m =~ /!uptime.*/
+      text = Net::HTTP.get('decapi.me', "/twitch/uptime?channel=#{@channelname}")
+      if text == "#{@channelname} is offline"
+        @socket.puts("PRIVMSG ##{@channelname} :#{text}")
+      else
+        @socket.puts("PRIVMSG ##{@channelname} :#{@channelname} has been live for #{text}")
+      end
+
+    elsif m =~ /!command add .+ .+/
+      filterCommand(m)
+      @socket.puts("PRIVMSG ##{@channelname} :Command added.")
+
+    else
+      #Commands from commands.ini
+      @commandsIni["commands"].each_key do |command|
+        if line.message.downcase =~ /#{command}.*/
+          @socket.puts("PRIVMSG ##{@channelname} :#{@commandsIni["commands"][command]}")
+        end
+      end
+
+    end
+
   end
 
   def run()
@@ -86,37 +157,15 @@ class Bot
           if line =~ /:.+!.+@.+\.tmi\.twitch\.tv PRIVMSG #.+ :.+/
             #outputs chat wsith stripping
             line = splitTraffic(line)
-            puts "#{getTime} #{line.user}#{" "*(25 - line.user.length)}:#{line[1]}"
+            puts "[#{line.timestamp}] #{line.user}#{" "*(25 - line.user.length)}:#{line[1]}"
+
+            #Run against command patterns
+            triggerCommands(line)
+
             @messages += 1
-
-            if line.message.downcase.include? "good bot"
-              @socket.puts("PRIVMSG ##{@channelname} :Awh thanks <3")
-
-            elsif line.message.downcase =~ /!time.*/
-              time = DateTime.now.strftime("%d/%m/%Y %H:%M")
-              @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
-
-            elsif line.message.downcase =~ /!game.*/
-              @socket.puts("PRIVMSG ##{@channelname} :The current game is #{Net::HTTP.get('decapi.me', "/twitch/game/#{@channelname}")}")
-
-            elsif line.message.downcase =~ /!uptime.*/
-              text = Net::HTTP.get('decapi.me', "/twitch/uptime?channel=#{@channelname}")
-
-              if text == "#{@channelname} is offline"
-                @socket.puts("PRIVMSG ##{@channelname} :#{text}")
-              else
-                @socket.puts("PRIVMSG ##{@channelname} :#{@channelname} has been live for #{text}")
-              end
-            end
-
-            @commandsIni["commands"].each_key do |command|
-              if line.message.downcase =~ /#{command}.*/
-                @socket.puts("PRIVMSG ##{@channelname} :#{@commandsIni["commands"][command]}")
-              end
-            end
           elsif line == "PING :tmi.twitch.tv"
             @socket.puts("PONG :tmi.twitch.tv")
-            puts "\n#{getTime} INFO - Ping recieved. Pong sent.\n"
+            puts "\n[#{getTime}] INFO - Ping recieved. Pong sent.\n"
           end
 
         end
@@ -133,12 +182,12 @@ class Bot
         @socket.puts("PRIVMSG ##{@channelname} :#{$command.gsub("send ", "")}")
       end
     end
-    
+
     messageReader.kill
 
-    puts "#{getTime} Ship Bot closing..."
-    puts "#{getTime} #{@messages} messages read"
-    puts "#{getTime} Ship Bot closed."
+    puts "[#{getTime}] Ship Bot closing..."
+    puts "[#{getTime}] #{@messages} messages read"
+    puts "[#{getTime}] Ship Bot closed."
   end
 end
 
