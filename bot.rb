@@ -96,6 +96,9 @@ class Bot
               time = DateTime.now.strftime("%d/%m/%Y %H:%M")
               @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
 
+            elsif line.message.downcase =~ /!game.*/
+              @socket.puts("PRIVMSG ##{@channelname} :The current game is #{Net::HTTP.get('decapi.me', "/twitch/game/#{@channelname}")}")
+
             elsif line.message.downcase =~ /!uptime.*/
               text = Net::HTTP.get('decapi.me', "/twitch/uptime?channel=#{@channelname}")
 
@@ -122,19 +125,21 @@ class Bot
     end
 
     #Get user input
-    userinputCheck = Thread.new do
-      $command = gets
-    end
+    # userinputCheck = Thread.new do
+    #   $command = gets
+    # end
 
     #quit loop
     while running do
+      $command = gets
       if $command =~ /disconnect|dc/
         running = false
+      elsif $command =~ /send .*/
+        @socket.puts("PRIVMSG ##{@channelname} :#{$command.gsub("send ", "")}")
       end
-      sleep(0.25)
     end
 
-    userinputCheck.kill
+  #  userinputCheck.kill
     messageReader.kill
 
     puts "#{getTime} Ship Bot closing..."
