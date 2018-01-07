@@ -7,18 +7,19 @@ require 'net/http'
 Thread.abort_on_exception=true
 
 class Bot
-  #constants / set up variables
-
-  botIni = IniFile.load("config.ini")
-  OAUTH = botIni["botinfo"]["OAuth-key"]
-  NICKNAME = botIni["botinfo"]["bot-nickname"]
-
   def initialize
+    Struct.new("Message", :user, :message)
+
     @running = false
     @socket = nil
     @channelname = nil
     @messages = 0
-    Struct.new("Message", :user, :message)
+
+    @botIni = IniFile.load("config/config.ini")
+    @commandsIni = IniFile.load("config/commands.ini")
+
+    @oauth = @botIni["botinfo"]["OAuth-key"]
+    @nickname = @botIni["botinfo"]["bot-nickname"]
   end
 
   def getTime
@@ -53,8 +54,8 @@ class Bot
     puts "#{getTime}: Connected successfully"
 
     puts "#{getTime}: Authenticating..."
-    @socket.puts("PASS #{OAUTH}")
-    @socket.puts("NICK #{NICKNAME}")
+    @socket.puts("PASS #{@oauth}")
+    @socket.puts("NICK #{@nickname}")
     puts "#{getTime}: Successfully authenticated"
 
     puts "#{getTime}: Joining #{@channelname}..."
@@ -87,36 +88,38 @@ class Bot
             line = splitTraffic(line)
             puts "#{getTime} #{line.user}#{" "*(25 - line.user.length)}:#{line[1]}"
             @messages += 1
+
+            if line.message.downcase.include? "good bot"
+              @socket.puts("PRIVMSG ##{@channelname} :Awh thanks <3")
+
+            elsif line.message.downcase =~ /!time.*/
+              time = DateTime.now.strftime("%d/%m/%Y %H:%M")
+              @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
+
+            elsif line.message.downcase =~ /!github.*/
+              @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
+
+            elsif line.message.downcase =~ /!commands.*/
+              @socket.puts("PRIVMSG ##{@channelname} :My commands can be found here https://github.com/SamWhale/ShipBot/blob/master/README.md")
+
+            elsif line.message.downcase =~ /!uptime.*/
+              text = Net::HTTP.get('decapi.me', "/twitch/uptime?channel=#{@channelname}")
+
+              if text == "#{@channelname} is offline"
+                @socket.puts("PRIVMSG ##{@channelname} :#{text}")
+              else
+                @socket.puts("PRIVMSG ##{@channelname} :#{@channelname} has been live for #{text}")
+              end
+            end
+
+            @commandsIni["commands"].each_key do |command|
+              if line.message.downcase =~ /#{command}.*/
+                @socket.puts("PRIVMSG ##{@channelname} :#{@commandsIni["commands"][command]}")
+              end
+            end
           elsif line == "PING :tmi.twitch.tv"
             @socket.puts("PONG :tmi.twitch.tv")
             puts "\n#{getTime} INFO - Ping recieved. Pong sent.\n"
-          end
-
-          if line[1].downcase.include? "good bot"
-            @socket.puts("PRIVMSG ##{@channelname} :Awh thanks <3")
-          end
-
-          if line[1].downcase =~ /!time.*/
-            time = DateTime.now.strftime("%d/%m/%Y %H:%M")
-            @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
-          end
-
-          if line[1].downcase =~ /!github.*/
-            @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
-          end
-
-          if line[1].downcase =~ /!commands.*/
-            @socket.puts("PRIVMSG ##{@channelname} :My commands can be found here https://github.com/SamWhale/ShipBot/blob/master/README.md")
-          end
-
-          if line[1].downcase =~ /!uptime.*/
-            text = Net::HTTP.get('decapi.me', "/twitch/uptime?channel=#{@channelname}")
-
-            if text == "#{@channelname} is offline"
-              @socket.puts("PRIVMSG ##{@channelname} :#{text}")
-            else
-              @socket.puts("PRIVMSG ##{@channelname} :#{@channelname} has been live for #{text}")
-            end
           end
 
         end
