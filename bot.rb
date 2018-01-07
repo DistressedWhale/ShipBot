@@ -124,11 +124,6 @@ class Bot
       end
     end
 
-    #Get user input
-    # userinputCheck = Thread.new do
-    #   $command = gets
-    # end
-
     #quit loop
     while running do
       $command = gets
@@ -138,8 +133,7 @@ class Bot
         @socket.puts("PRIVMSG ##{@channelname} :#{$command.gsub("send ", "")}")
       end
     end
-
-  #  userinputCheck.kill
+    
     messageReader.kill
 
     puts "#{getTime} Ship Bot closing..."
