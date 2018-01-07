@@ -13,3 +13,4 @@
 | !uptime       | Returns uptime status of the current channel |
 | !github       | Returns github repository |
 | !commands     | Returns link to readme.md |
+| !game         | Returns current game being played |
