@@ -96,12 +96,6 @@ class Bot
               time = DateTime.now.strftime("%d/%m/%Y %H:%M")
               @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
 
-            elsif line.message.downcase =~ /!github.*/
-              @socket.puts("PRIVMSG ##{@channelname} :My github repository can be found at https://github.com/SamWhale/ShipBot")
-
-            elsif line.message.downcase =~ /!commands.*/
-              @socket.puts("PRIVMSG ##{@channelname} :My commands can be found here https://github.com/SamWhale/ShipBot/blob/master/README.md")
-
             elsif line.message.downcase =~ /!uptime.*/
               text = Net::HTTP.get('decapi.me', "/twitch/uptime?channel=#{@channelname}")
 
