@@ -15,3 +15,4 @@
 | !commands     | Returns link to readme.md |
 | !game         | Returns current game being played |
 | !command add [call] [response] | Adds a command that when triggered by [call], returns [reponse] |
+| !rtd [n] | Rolls an n sided dice. Dice sides defaults to 6 when a number not specified |

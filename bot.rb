@@ -108,6 +108,14 @@ class Bot
     if m.include? "good bot"
       @socket.puts("PRIVMSG ##{@channelname} :Awh thanks <3")
 
+    elsif m =~ /!rtd.*/
+      if m =~ /!rtd [1-9][0-9]+/
+        num = m[5..m.length-1].to_i
+        randNum = (rand(num) + 1).to_s
+      else
+        randNum = (rand(6) + 1).to_s
+      end
+      @socket.puts("PRIVMSG ##{@channelname} :You rolled #{randNum}")
     elsif m =~ /!time.*/
       time = DateTime.now.strftime("%d/%m/%Y %H:%M")
       @socket.puts("PRIVMSG ##{@channelname} :The time in GMT is #{time}")
@@ -147,6 +155,7 @@ class Bot
       while (running) do
         line = ""
         traffic = IO.select([@socket]) #get socket traffic
+
         traffic[0].each do |s| #for each line
           line = s.gets #get the line
           if line != nil
