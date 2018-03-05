@@ -1,4 +1,4 @@
-# Ship Bot by Sam Whale
+# Ship Bot by Sehwah
 
 ##### Console commands
 | Command       | Result        |
